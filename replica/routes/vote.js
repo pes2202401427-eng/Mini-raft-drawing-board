@@ -1,0 +1,27 @@
+// replica/routes/vote.js
+const S = require('../state');
+const { becomeFollower, resetElectionTimer } = require('../election');
+
+function setupElectionRoutes(app) {
+  app.post('/request-vote', (req, res) => {
+    const { term, candidateId } = req.body;
+
+    if (term > S.currentTerm) becomeFollower(term);
+
+    const voteGranted =
+      term >= S.currentTerm &&
+      (S.votedFor === null || S.votedFor === candidateId);
+
+    if (voteGranted) {
+      S.votedFor = candidateId;
+      resetElectionTimer();
+      S.raftLog(`Voted YES for ${candidateId} in term ${term}`);
+    } else {
+      S.raftLog(`Voted NO — already voted for ${S.votedFor}`);
+    }
+
+    res.json({ term: S.currentTerm, voteGranted });
+  });
+}
+
+module.exports = { setupElectionRoutes };
