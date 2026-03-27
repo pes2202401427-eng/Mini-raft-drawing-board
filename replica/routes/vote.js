@@ -1,3 +1,4 @@
+
 // replica/routes/vote.js
 // Handles POST /request-vote — other replicas ask us to vote
 

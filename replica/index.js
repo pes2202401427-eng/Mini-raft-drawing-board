@@ -13,16 +13,16 @@ const { startElectionSystem }  = require('./election');
 
 // ── SAANVI's modules (she will create these — stub for now) ──
 // Uncomment these lines once Saanvi pushes her files:
-// const { setupReplicationRoutes } = require('./routes/appendEntries');
-// const { setupSyncRoutes }        = require('./routes/syncLog');
+const { setupReplicationRoutes } = require('./routes/appendEntries');
+const { setupSyncRoutes }        = require('./routes/syncLog');
 
 // Register routes
 setupElectionRoutes(app);     // /request-vote
 setupHeartbeatRoutes(app);    // /heartbeat, /status
 
 // Saanvi's routes — uncomment when she pushes:
-// setupReplicationRoutes(app);
-// setupSyncRoutes(app);
+setupReplicationRoutes(app);
+setupSyncRoutes(app);
 
 // Start server
 const S = require('./state');
