@@ -1,42 +1,39 @@
-const axios = require('axios');
+// replica/routes/appendEntries.js
+//SAANVI PART
 const S = require('../state');
-const { becomeFollower, resetElectionTimer } = require('../election');
+const { becomeFollower } = require('../election');
 
 function setupReplicationRoutes(app) {
 
-  // Leader → Followers (log replication + heartbeat)
   app.post('/append-entries', (req, res) => {
-    const { term, leaderId, entries = [], leaderCommit } = req.body;
+    const { term, leaderId, entry, prevLogIndex } = req.body;
 
-    // Step 1: Reject if term is old
+    // reject old leader
     if (term < S.currentTerm) {
       return res.json({ success: false });
     }
 
-    // Step 2: Become follower if needed
-    if (term > S.currentTerm) {
-      becomeFollower(term, leaderId);
-    } else if (S.state !== 'follower') {
-      becomeFollower(term, leaderId);
+    // accept leader
+    becomeFollower(term, leaderId);
+
+    // check if behind
+    if (prevLogIndex >= 0 && S.log.length <= prevLogIndex) {
+      return res.json({
+        success: false,
+        needsSync: true,
+        followerLogLength: S.log.length,
+      });
     }
 
-    // 🔥 Step 3: VERY IMPORTANT FIX
-    resetElectionTimer();
+    // append entry
+    if (entry) {
+      S.log.push(entry);
+      S.commitIndex = S.log.length - 1;
 
-    S.raftLog(`Received AppendEntries from ${leaderId}`);
-
-    // Step 4: Append logs
-    if (entries.length > 0) {
-      S.log = [...S.log, ...entries];
-      S.raftLog(`Appended ${entries.length} entries`);
+      S.raftLog(`Appended entry ${S.commitIndex}`);
     }
 
-    // Step 5: Update commit index
-    if (leaderCommit !== undefined) {
-      S.commitIndex = Math.min(leaderCommit, S.log.length - 1);
-    }
-
-    return res.json({ success: true });
+    res.json({ success: true });
   });
 
 }
