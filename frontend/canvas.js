@@ -13,31 +13,9 @@ const logEl     = document.getElementById('log');
 // CanvasTools class comes from canvas-tools.js (loaded before this file)
 const tools = new CanvasTools(canvas, ctx);
 
-// Pen button click
-document.getElementById('btn-pen').addEventListener('click', () => {
-  tools.setMode('pen');
-  document.getElementById('btn-pen').className    = 'tool-btn active';
-  document.getElementById('btn-eraser').className = 'tool-btn inactive';
-});
-
-// Eraser button click
-document.getElementById('btn-eraser').addEventListener('click', () => {
-  tools.setMode('eraser');
-  document.getElementById('btn-eraser').className = 'tool-btn active';
-  document.getElementById('btn-pen').className    = 'tool-btn inactive';
-});
-
-// Ctrl+Z = undo last stroke (local only, doesn't send to server)
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-    const undone = tools.undo();
-    if (undone) addLog('Undo (local only)');
-  }
-});
-
 // ── Connect to WebSocket (gateway) ───────────────────────────────
 // createReconnectingWS comes from reconnect.js (loaded before this file)
-const WS_URL = `ws://${location.hostname}:8080`;
+const WS_URL = `ws://localhost:8080`;
 
 const ws = createReconnectingWS(WS_URL, {
 
@@ -77,6 +55,30 @@ const ws = createReconnectingWS(WS_URL, {
   },
 
 });
+
+// Pen button click
+document.getElementById('btn-pen').addEventListener('click', () => {
+  tools.setMode('pen');
+  document.getElementById('btn-pen').className    = 'tool-btn active';
+  document.getElementById('btn-eraser').className = 'tool-btn inactive';
+});
+
+// Eraser button click
+document.getElementById('btn-eraser').addEventListener('click', () => {
+  tools.setMode('eraser');
+  document.getElementById('btn-eraser').className = 'tool-btn active';
+  document.getElementById('btn-pen').className    = 'tool-btn inactive';
+});
+
+// Ctrl+Z = undo last stroke (local only, doesn't send to server)
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    const undone = tools.undo();
+    if (undone) addLog('Undo (local only)');
+  }
+});
+
+
 
 // ── Mouse drawing ─────────────────────────────────────────────────
 let drawing = false;
@@ -179,7 +181,11 @@ function replayCanvas() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ws.send(JSON.stringify({ type: "get-full-log" }));
+  if (ws && ws.readyState === 1) {
+     ws.send(JSON.stringify({ type: "get-full-log" }));
+}
+
+  
 }
 
 // ── Download button ─────────────────────────────────────────
@@ -192,14 +198,6 @@ function downloadCanvas() {
   addLog("Canvas downloaded");
 }
 
-function downloadCanvas() {
-  const link = document.createElement('a');
-  link.download = 'drawing.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-
-  addLog('Canvas downloaded');
-}
 
 // ── Start the dashboard ───────────────────────────────────────────
 // initDashboard comes from dashboard.js (loaded before this file)
