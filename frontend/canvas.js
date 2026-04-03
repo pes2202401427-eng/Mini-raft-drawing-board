@@ -192,6 +192,15 @@ function downloadCanvas() {
   addLog("Canvas downloaded");
 }
 
+function downloadCanvas() {
+  const link = document.createElement('a');
+  link.download = 'drawing.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  addLog('Canvas downloaded');
+}
+
 // ── Start the dashboard ───────────────────────────────────────────
 // initDashboard comes from dashboard.js (loaded before this file)
 initDashboard();
