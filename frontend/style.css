@@ -1,0 +1,107 @@
+/* frontend/style.css — Roopashree */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#toolbar {
+  display: flex;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #1e293b;
+  width: 100%;
+  align-items: center;
+  border-bottom: 2px solid #334155;
+  flex-wrap: wrap;
+}
+
+#toolbar label { color: #cbd5e1; font-size: 13px; }
+
+.tool-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.tool-btn.active   { background: #e94560; color: white; }
+.tool-btn.inactive { background: #334155; color: #cbd5e1; }
+
+#status {
+  margin-left: auto;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  background: #1e3a5f;
+  color: #f87171;
+  transition: background 0.3s, color 0.3s;
+}
+
+#status.connected { background: #14532d; color: #4ade80; }
+
+#board {
+  background: white;
+  cursor: crosshair;
+  display: block;
+  margin-top: 10px;
+  border: 3px solid #e94560;
+  border-radius: 4px;
+}
+
+#board.eraser-mode { cursor: cell; }
+
+#log {
+  position: fixed;
+  bottom: 145px;
+  right: 0;
+  width: 300px;
+  max-height: 100px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.85);
+  color: #4ade80;
+  font-size: 11px;
+  padding: 6px 10px;
+  font-family: monospace;
+}
+
+#dashboard {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  background: rgba(15,23,42,0.97);
+  border-top: 2px solid #334155;
+  border-left: 2px solid #334155;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+#dashboard h4 {
+  color: #e2e8f0;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.dash-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 3px 0;
+}
+
+.dash-val           { color: #4ade80; font-weight: bold; }
+.dash-val.leader    { color: #fbbf24; }
+.dash-val.follower  { color: #60a5fa; }
+.dash-val.candidate { color: #f87171; }

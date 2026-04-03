@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MiniRAFT Drawing Board</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="toolbar">
+  <label>Color: <input type="color" id="colorPicker" value="#e94560" /></label>
+  <label>Size:  <input type="range" id="brushSize" min="1" max="20" value="4" /></label>
+
+  <button id="btn-pen"    class="tool-btn active">✏️ Pen</button>
+  <button id="btn-eraser" class="tool-btn inactive">🧹 Eraser</button>
+
+  <button class="tool-btn inactive" onclick="clearCanvas()"
+    style="background:#e94560;color:white;">🗑️ Clear</button>
+  <button class="tool-btn inactive" onclick="downloadCanvas()">
+    ⬇️ Download
+  </button>
+
+  <!-- ⭐ NEW -->
+  <button class="tool-btn inactive" onclick="replayCanvas()">▶ Replay</button>
+  <button class="tool-btn inactive" onclick="downloadCanvas()">💾 Save</button>
+
+  <div id="status">Connecting...</div>
+</div>
+
+<canvas id="board" width="1100" height="580"></canvas>
+
+<div id="log"></div>
+
+<div id="dashboard">
+  <h4>🖥️ Cluster Status</h4>
+  <div class="dash-row">
+    <span>Leader</span>
+    <span class="dash-val leader" id="dash-leader">—</span>
+  </div>
+  <div class="dash-row">
+    <span>Clients</span>
+    <span class="dash-val" id="dash-clients">—</span>
+  </div>
+  <hr style="border-color:#334155;margin:5px 0"/>
+  <div class="dash-row">
+    <span><b>Replica</b></span>
+    <span><b>State</b></span>
+    <span><b>Term</b></span>
+    <span><b>Log</b></span>
+  </div>
+  <div class="dash-row">
+    <span>R1</span>
+    <span class="dash-val" id="dash-r1-state">—</span>
+    <span class="dash-val" id="dash-r1-term">—</span>
+    <span class="dash-val" id="dash-r1-log">—</span>
+  </div>
+  <div class="dash-row">
+    <span>R2</span>
+    <span class="dash-val" id="dash-r2-state">—</span>
+    <span class="dash-val" id="dash-r2-term">—</span>
+    <span class="dash-val" id="dash-r2-log">—</span>
+  </div>
+  <div class="dash-row">
+    <span>R3</span>
+    <span class="dash-val" id="dash-r3-state">—</span>
+    <span class="dash-val" id="dash-r3-term">—</span>
+    <span class="dash-val" id="dash-r3-log">—</span>
+  </div>
+</div>
+
+<script src="reconnect.js"></script>
+<script src="canvas-tools.js"></script>
+<script src="dashboard.js"></script>
+<script src="canvas.js"></script>
+
+</body>
+</html>
