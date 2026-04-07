@@ -8,46 +8,75 @@
 </head>
 <body>
 
+<!-- Username modal — shown on first load -->
+<div id="name-modal">
+  <div id="name-box">
+    <h2>Welcome to MiniRAFT Board</h2>
+    <p>Enter your name to start drawing</p>
+    <input type="text" id="name-input" placeholder="Your name..." maxlength="20" />
+    <button id="name-btn">Join</button>
+  </div>
+</div>
+
+<!-- Main toolbar -->
 <div id="toolbar">
+  <div id="user-badge">
+    <span id="user-avatar"></span>
+    <span id="user-name-display"></span>
+  </div>
+
   <label>Color: <input type="color" id="colorPicker" value="#e94560" /></label>
-  <label>Size:  <input type="range" id="brushSize" min="1" max="20" value="4" /></label>
+  <label>Size: <input type="range" id="brushSize" min="1" max="20" value="4" /></label>
 
   <button id="btn-pen"    class="tool-btn active">✏️ Pen</button>
   <button id="btn-eraser" class="tool-btn inactive">🧹 Eraser</button>
-
-  <button class="tool-btn inactive" onclick="clearCanvas()"
-    style="background:#e94560;color:white;">🗑️ Clear</button>
-  <button class="tool-btn inactive" onclick="downloadCanvas()">
-    ⬇️ Download
-  </button>
-
-  <!-- ⭐ NEW -->
-  <button class="tool-btn inactive" onclick="replayCanvas()">▶ Replay</button>
-  
+  <button id="btn-clear"  class="tool-btn danger">🗑️ Clear</button>
+  <button id="btn-undo"   class="tool-btn inactive">↩️ Undo</button>
+  <button id="btn-download" class="tool-btn inactive">💾 Download</button>
+  <button id="btn-replay"   class="tool-btn inactive">▶️ Replay</button>
 
   <div id="status">Connecting...</div>
 </div>
 
-<canvas id="board" width="1100" height="580"></canvas>
+<!-- Active users bar -->
+<div id="users-bar">
+  <span id="users-label">Online: </span>
+  <span id="users-list"></span>
+</div>
 
+<!-- Canvas -->
+<canvas id="board" width="1100" height="530"></canvas>
+
+<!-- Remote cursors layer (absolutely positioned over canvas) -->
+<div id="cursors-layer"></div>
+
+<!-- Log panel -->
 <div id="log"></div>
 
+<!-- Dashboard panel -->
 <div id="dashboard">
   <h4>🖥️ Cluster Status</h4>
-  <div class="dash-row">
+
+  <div class="dash-row two-col">
     <span>Leader</span>
     <span class="dash-val leader" id="dash-leader">—</span>
   </div>
-  <div class="dash-row">
+  <div class="dash-row two-col">
     <span>Clients</span>
     <span class="dash-val" id="dash-clients">—</span>
   </div>
-  <hr style="border-color:#334155;margin:5px 0"/>
-  <div class="dash-row">
-    <span><b>Replica</b></span>
-    <span><b>State</b></span>
-    <span><b>Term</b></span>
-    <span><b>Log</b></span>
+  <div class="dash-row two-col">
+    <span>Strokes</span>
+    <span class="dash-val" id="dash-strokes">—</span>
+  </div>
+
+  <hr style="border-color:#1e293b;margin:6px 0"/>
+
+  <div class="dash-row dash-header">
+    <span>Node</span>
+    <span>State</span>
+    <span>Term</span>
+    <span>Log</span>
   </div>
   <div class="dash-row">
     <span>R1</span>
@@ -67,8 +96,20 @@
     <span class="dash-val" id="dash-r3-term">—</span>
     <span class="dash-val" id="dash-r3-log">—</span>
   </div>
+
+  <hr style="border-color:#1e293b;margin:6px 0"/>
+
+  <!-- Online users section -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+    <span style="color:#e2e8f0;font-size:11px;font-weight:700">🟢 Online</span>
+    <span class="dash-val" id="dash-online-count">0</span>
+  </div>
+  <div id="online-users-list">
+    <div style="color:#475569;font-size:11px">Waiting for users...</div>
+  </div>
 </div>
 
+<!-- Scripts — ORDER MATTERS -->
 <script src="reconnect.js"></script>
 <script src="canvas-tools.js"></script>
 <script src="dashboard.js"></script>
