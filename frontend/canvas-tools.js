@@ -1,59 +1,55 @@
 // frontend/canvas-tools.js — Roopashree
-// Manages two things:
-// 1. Tool mode: pen or eraser
-// 2. Undo history: saves snapshots so Ctrl+Z works
+// Handles: pen/eraser mode switching + undo with snapshot history
 
-const MAX_UNDO = 50; // remember last 50 actions
+const MAX_UNDO = 50;
 
 class CanvasTools {
   constructor(canvas, ctx) {
     this.canvas  = canvas;
     this.ctx     = ctx;
-    this.mode    = 'pen';  // start in pen mode
-    this.history = [];     // stores canvas snapshots for undo
+    this.mode    = 'pen';   // 'pen' | 'eraser'
+    this.history = [];      // ImageData snapshots for undo
   }
 
-  // Call this BEFORE each stroke starts (on mousedown)
-  // It saves a photo of the canvas so we can restore it on undo
+  // Call BEFORE each stroke starts (on mousedown/touchstart)
+  // Takes a photo of the current canvas state
   saveSnapshot() {
-    const snapshot = this.ctx.getImageData(
+    const snap = this.ctx.getImageData(
       0, 0,
       this.canvas.width,
       this.canvas.height
     );
-    this.history.push(snapshot);
-
-    // Don't keep more than MAX_UNDO snapshots
+    this.history.push(snap);
     if (this.history.length > MAX_UNDO) {
-      this.history.shift(); // remove oldest
+      this.history.shift();  // remove oldest to save memory
     }
   }
 
-  // Called when user presses Ctrl+Z
+  // Called on Ctrl+Z — restores last saved snapshot
   undo() {
-    if (this.history.length === 0) return false; // nothing to undo
-    const previousSnapshot = this.history.pop();
-    this.ctx.putImageData(previousSnapshot, 0, 0);
+    if (this.history.length === 0) return false;
+    const prev = this.history.pop();
+    this.ctx.putImageData(prev, 0, 0);
     return true;
   }
 
-  // Switch between pen and eraser
+  // Switch tool mode and update canvas cursor
   setMode(mode) {
     this.mode = mode;
     if (mode === 'eraser') {
-      this.canvas.classList.add('eraser-mode');    // changes cursor
+      this.canvas.classList.add('eraser-mode');
     } else {
-      this.canvas.classList.remove('eraser-mode'); // back to crosshair
+      this.canvas.classList.remove('eraser-mode');
     }
   }
 
-  // Eraser draws in white; pen draws in chosen color
-  getStrokeColor(pickedColor) {
+  // Returns the actual color to use based on current mode
+  getColor(pickedColor) {
     return this.mode === 'eraser' ? '#ffffff' : pickedColor;
   }
 
-  // Eraser is automatically bigger so it feels like an eraser
-  getStrokeSize(pickedSize) {
+  // Returns the actual size to use — eraser is bigger
+  getSize(pickedSize) {
     return this.mode === 'eraser' ? Math.max(pickedSize * 3, 18) : pickedSize;
   }
 }

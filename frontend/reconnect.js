@@ -1,19 +1,24 @@
 // frontend/reconnect.js — Roopashree
-// Handles WebSocket auto-reconnect with exponential backoff
-// This means: if connection drops, it automatically tries again
-// waiting 1s, then 1.5s, then 2.25s... up to max 10s between tries
+// Auto-reconnecting WebSocket with exponential backoff
+// Backoff means: retry after 1s, then 1.5s, then 2.25s... max 10s
 
 function createReconnectingWS(url, { onMessage, onOpen, onClose } = {}) {
-  let ws = null;
-  let delay = 1000;   // start retrying after 1 second
-  let stopped = false;
+  let ws       = null;
+  let delay    = 1000;   // ms — starts at 1s
+  let stopped  = false;
 
   function connect() {
     if (stopped) return;
-    ws = new WebSocket(url);
+
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      scheduleRetry();
+      return;
+    }
 
     ws.onopen = () => {
-      delay = 1000;   // reset the wait time on successful connect
+      delay = 1000;             // reset backoff on success
       if (onOpen) onOpen(ws);
     };
 
@@ -23,22 +28,23 @@ function createReconnectingWS(url, { onMessage, onOpen, onClose } = {}) {
 
     ws.onclose = () => {
       if (onClose) onClose();
-      if (!stopped) {
-        // wait 'delay' ms then try again
-        setTimeout(connect, delay);
-        // increase delay each time, max 10 seconds
-        delay = Math.min(delay * 1.5, 10000);
-      }
+      scheduleRetry();
     };
 
     ws.onerror = () => {
-      ws.close(); // triggers onclose which retries
+      // onerror is always followed by onclose, so just close
+      ws.close();
     };
   }
 
-  connect(); // start first connection attempt
+  function scheduleRetry() {
+    if (stopped) return;
+    setTimeout(connect, delay);
+    delay = Math.min(delay * 1.5, 10000);  // grow delay, cap at 10s
+  }
 
-  // return object so canvas.js can use it
+  connect();  // first attempt
+
   return {
     send(data) {
       if (ws && ws.readyState === WebSocket.OPEN) {

@@ -1,75 +1,77 @@
 // frontend/dashboard.js — Roopashree
-// Shows live cluster info in the bottom-right panel
-// Polls the gateway and each replica every 2 seconds
+// Polls gateway + each replica every 2 seconds
+// Shows live cluster state in the bottom-right panel
 
 function initDashboard() {
+  const els = {
+    leader:  document.getElementById('dash-leader'),
+    clients: document.getElementById('dash-clients'),
+    strokes: document.getElementById('dash-strokes'),
+    replicas: [
+      {
+        state: document.getElementById('dash-r1-state'),
+        term:  document.getElementById('dash-r1-term'),
+        log:   document.getElementById('dash-r1-log'),
+      },
+      {
+        state: document.getElementById('dash-r2-state'),
+        term:  document.getElementById('dash-r2-term'),
+        log:   document.getElementById('dash-r2-log'),
+      },
+      {
+        state: document.getElementById('dash-r3-state'),
+        term:  document.getElementById('dash-r3-term'),
+        log:   document.getElementById('dash-r3-log'),
+      },
+    ]
+  };
 
-  // Get references to all the HTML elements in the dashboard
-  const leaderEl  = document.getElementById('dash-leader');
-  const clientsEl = document.getElementById('dash-clients');
-
-  // For each of the 3 replicas, get their state/term/log elements
-  const replicaEls = [
-    {
-      state: document.getElementById('dash-r1-state'),
-      term:  document.getElementById('dash-r1-term'),
-      log:   document.getElementById('dash-r1-log'),
-    },
-    {
-      state: document.getElementById('dash-r2-state'),
-      term:  document.getElementById('dash-r2-term'),
-      log:   document.getElementById('dash-r2-log'),
-    },
-    {
-      state: document.getElementById('dash-r3-state'),
-      term:  document.getElementById('dash-r3-term'),
-      log:   document.getElementById('dash-r3-log'),
-    },
-  ];
-
-  // The 3 replica ports
   const PORTS = [5000, 5001, 5002];
 
   async function refresh() {
-
-    // 1. Ask gateway: who is the leader? how many clients?
+    // Ask gateway for leader + client count
     try {
-      const response = await fetch('/status');
-      const data     = await response.json();
-      if (leaderEl)  leaderEl.textContent  = data.leader           || '—';
-      if (clientsEl) clientsEl.textContent = data.connectedClients ?? '—';
-    } catch (e) {
-      // gateway not reachable yet — that's fine
+      const res  = await fetch('/status');
+      const data = await res.json();
+      if (els.leader)  els.leader.textContent  = data.leader           || '—';
+      if (els.clients) els.clients.textContent = data.connectedClients ?? '—';
+    } catch (_) {
+      if (els.leader) els.leader.textContent = '—';
     }
 
-    // 2. Ask each replica: what state are you in? what term? how big is your log?
+    // Ask each replica for its state
     for (let i = 0; i < 3; i++) {
+      const r = els.replicas[i];
       try {
-        const response = await fetch(`http://localhost:${PORTS[i]}/status`);
-        const data     = await response.json();
-        const els      = replicaEls[i];
+        const res  = await fetch(
+          `http://localhost:${PORTS[i]}/status`,
+          { mode: 'cors' }
+        );
+        const data = await res.json();
 
-        if (els.state) {
-          els.state.textContent = data.state || '—';
-          // colour-code: leader=yellow, follower=blue, candidate=red
-          els.state.className = `dash-val ${data.state || ''}`;
+        if (r.state) {
+          r.state.textContent = data.state || '—';
+          r.state.className   = `dash-val ${data.state || ''}`;
         }
-        if (els.term) els.term.textContent = data.term      ?? '—';
-        if (els.log)  els.log.textContent  = data.logLength ?? '—';
+        if (r.term) r.term.textContent = data.term      ?? '—';
+        if (r.log)  r.log.textContent  = data.logLength ?? '—';
 
-      } catch (e) {
-        // replica is down — show "down" in red
-        const els = replicaEls[i];
-        if (els.state) {
-          els.state.textContent = 'down';
-          els.state.className   = 'dash-val candidate';
+        // Update total strokes from leader
+        if (data.state === 'leader' && els.strokes) {
+          els.strokes.textContent = data.logLength ?? '—';
         }
-        if (els.term) els.term.textContent = '—';
-        if (els.log)  els.log.textContent  = '—';
+
+      } catch (_) {
+        if (r.state) {
+          r.state.textContent = 'down';
+          r.state.className   = 'dash-val down';
+        }
+        if (r.term) r.term.textContent = '—';
+        if (r.log)  r.log.textContent  = '—';
       }
     }
   }
 
-  refresh();                    // run immediately on page load
-  setInterval(refresh, 2000);  // then every 2 seconds
+  refresh();
+  setInterval(refresh, 2000);
 }
