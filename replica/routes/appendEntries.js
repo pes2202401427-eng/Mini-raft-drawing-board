@@ -1,23 +1,27 @@
-// replica/routes/appendEntries.js
-//SAANVI PART
 const S = require('../state');
 const { becomeFollower } = require('../election');
+const axios = require('axios');
+
+// 🔥 ADD THIS
+const GATEWAY_URL = process.env.GATEWAY_URL || "http://gateway:8080";
 
 function setupReplicationRoutes(app) {
+  app.post('/append-entries', async (req, res) => {
+    const {
+      term,
+      leaderId,
+      entry,
+      prevLogIndex = -1,
+      leaderCommit = -1,
+    } = req.body;
 
-  app.post('/append-entries', (req, res) => {
-    const { term, leaderId, entry, prevLogIndex } = req.body;
-
-    // reject old leader
     if (term < S.currentTerm) {
-      return res.json({ success: false });
+      return res.json({ success: false, reason: 'stale-term' });
     }
 
-    // accept leader
     becomeFollower(term, leaderId);
 
-    // check if behind
-    if (prevLogIndex >= 0 && S.log.length <= prevLogIndex) {
+    if (prevLogIndex >= 0 && S.log.length - 1 < prevLogIndex) {
       return res.json({
         success: false,
         needsSync: true,
@@ -25,17 +29,31 @@ function setupReplicationRoutes(app) {
       });
     }
 
-    // append entry
+    // ─── APPEND LOG ─────────────────────────
     if (entry) {
-      S.log.push(entry);
-      S.commitIndex = S.log.length - 1;
+      const expectedIndex = prevLogIndex + 1;
 
-      S.raftLog(`Appended entry ${S.commitIndex}`);
+      if (S.log.length > expectedIndex) {
+        S.log = S.log.slice(0, expectedIndex);
+      }
+
+      if (S.log.length === expectedIndex) {
+        S.log.push(entry);
+      }
     }
 
-    res.json({ success: true });
-  });
+    // ─── COMMIT LOG ─────────────────────────
+    const prevCommitIndex = S.commitIndex;
+    const nextCommit = Math.min(leaderCommit, S.log.length - 1);
+    S.commitIndex = Math.max(S.commitIndex, nextCommit);
 
+
+    return res.json({
+      success: true,
+      logLength: S.log.length,
+      commitIndex: S.commitIndex,
+    });
+  });
 }
 
 module.exports = { setupReplicationRoutes };

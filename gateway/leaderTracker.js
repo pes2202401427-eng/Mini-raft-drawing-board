@@ -1,42 +1,56 @@
 const axios = require('axios');
 
-const REPLICAS = process.env.REPLICAS || 'replica1:5000,replica2:5001,replica3:5002';
+const envReplicas = process.env.REPLICAS;
 
-const ALL_REPLICAS = REPLICAS.split(',').map(r => {
-  const [host, port] = r.split(':');
-  return { id: host, url: `http://${host}:${port}` };
-});
+function parseReplicaTargets(str) {
+  return str
+    .split(',')
+    .map((r) => r.trim())
+    .filter(Boolean)
+    .map((r) => {
+      const [host, port] = r.split(':');
+      return { id: host, host, port, url: `http://${host}:${port}` };
+    });
+}
+
+const defaultTargets = [
+  'replica1:5000',
+  'replica2:5001',
+  'replica3:5002',
+  'localhost:5000',
+  'localhost:5001',
+  'localhost:5002',
+];
+
+const ALL_REPLICAS = envReplicas
+  ? parseReplicaTargets(envReplicas)
+  : parseReplicaTargets(defaultTargets.join(','));
 
 let currentLeaderUrl = null;
 let currentLeaderId = null;
 
-// Set leader when replica notifies
 function setLeader(id, url) {
   currentLeaderId = id;
   currentLeaderUrl = url;
   console.log(`[GATEWAY] Leader set: ${id} (${url})`);
 }
 
-// Discover leader manually
 async function discoverLeader() {
-  console.log("[GATEWAY] Discovering leader...");
-
   for (const replica of ALL_REPLICAS) {
     try {
       const res = await axios.get(`${replica.url}/status`, { timeout: 500 });
 
       if (res.data.state === 'leader') {
+        currentLeaderId = res.data.id || replica.id;
         currentLeaderUrl = replica.url;
-        currentLeaderId = replica.id;
-        console.log(`[GATEWAY] Found leader: ${replica.id}`);
+        console.log(`[GATEWAY] Found leader: ${currentLeaderId} (${currentLeaderUrl})`);
         return true;
       }
-    } catch (e) {
-      console.log(`[GATEWAY] ${replica.id} not reachable`);
+    } catch {
+      // Ignore unreachable replica and continue probing.
     }
   }
 
-  console.log("[GATEWAY] No leader found");
   return false;
 }
 
@@ -51,7 +65,10 @@ function getLeaderId() {
 function clearLeader() {
   currentLeaderUrl = null;
   currentLeaderId = null;
-  console.log("[GATEWAY] Leader cleared");
+}
+
+function getReplicaUrls() {
+  return ALL_REPLICAS.map((r) => r.url);
 }
 
 module.exports = {
@@ -59,5 +76,6 @@ module.exports = {
   discoverLeader,
   getLeaderUrl,
   getLeaderId,
-  clearLeader
+  clearLeader,
+  getReplicaUrls,
 };

@@ -1,10 +1,15 @@
-FROM node:20-alpine
+FROM node:18
 
 WORKDIR /app
 
-COPY package.json .
+# install deps
+COPY gateway/package*.json ./
 RUN npm install
 
-COPY . .
+# copy gateway code
+COPY gateway/ ./
 
-CMD ["npm", "start"]
+# 🔥 copy frontend INTO gateway container
+COPY frontend/ ./frontend/
+
+CMD ["node", "index.js"]

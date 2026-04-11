@@ -9,7 +9,7 @@ const S = require('./state');
 // Random 500-800ms — if no heartbeat arrives, start election
 function resetElectionTimer() {
   clearTimeout(S.electionTimer);
-  const timeout = Math.floor(Math.random() * 500) + 500;
+  const timeout = Math.floor(Math.random() * 500) + 1000;
   S.electionTimer = setTimeout(startElection, timeout);
 }
 

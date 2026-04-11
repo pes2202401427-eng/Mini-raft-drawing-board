@@ -32,7 +32,7 @@ async function replicateToFollowers(entry, index) {
     Promise.allSettled(promises),
     new Promise(resolve => setTimeout(resolve, 500)) // max wait 500ms
     ]);
-  const majority = 2; // for 3 nodes
+  const majority = Math.floor((S.PEERS.length + 1) / 2) + 1;
 
   if (acks >= majority) {
     S.commitIndex = index;
