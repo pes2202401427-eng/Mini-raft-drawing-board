@@ -29,8 +29,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const WS_URL = `ws://${location.hostname}:8080`;
-const ws = createReconnectingWS(WS_URL, {
+  const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;const ws = createReconnectingWS(WS_URL, {
   onOpen() {
     statusEl.textContent = 'Connected to RAFT cluster';
     statusEl.className = 'connected';
